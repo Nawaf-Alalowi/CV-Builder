@@ -1,1 +1,525 @@
-pbpaste > public/index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nawaf Alalawi - CV Builder</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#e8edf2;color:#222;font-size:13px;}
+
+/* ── EDITOR ── */
+#editor-panel{max-width:920px;margin:20px auto;background:#fff;border-radius:8px;box-shadow:0 2px 16px rgba(0,0,0,.15);padding:24px;}
+.ed-section{margin-bottom:22px;}
+.ed-section>h3{font-size:12px;font-weight:700;color:#1a4a7a;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;}
+.job-card{border:1px solid #d0dcea;border-radius:6px;padding:12px;margin-bottom:10px;background:#f7fafd;}
+.job-card summary{font-weight:600;cursor:pointer;color:#1a4a7a;font-size:13px;list-style:none;display:flex;align-items:center;gap:6px;}
+.job-card summary::before{content:'▶';font-size:9px;transition:.2s;}
+details[open]>summary::before{content:'▼';}
+details[open]>summary{margin-bottom:10px;}
+.role-card{border:1px solid #c8d8ea;border-radius:5px;padding:10px;margin-bottom:8px;background:#fff;}
+.role-card summary{font-weight:600;color:#333;font-size:12.5px;cursor:pointer;list-style:none;display:flex;gap:6px;align-items:center;}
+.role-card summary::before{content:'▶';font-size:9px;color:#1a4a7a;transition:.2s;}
+.role-card details[open]>summary::before{content:'▼';}
+.role-card details[open]>summary{margin-bottom:8px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.form-row.full{grid-template-columns:1fr;}
+label{font-size:11px;color:#666;display:block;margin-bottom:2px;font-weight:600;}
+input,textarea{width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:4px;font-size:12px;font-family:inherit;background:#fff;}
+textarea{resize:vertical;min-height:75px;}
+.btn{padding:6px 13px;border:none;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;}
+.btn-blue{background:#1a4a7a;color:#fff;}.btn-blue:hover{background:#133860;}
+.btn-red{background:#c0392b;color:#fff;}.btn-red:hover{background:#922b21;}
+.btn-green{background:#1e7e34;color:#fff;}.btn-green:hover{background:#155724;}
+.btn-print{background:#1a4a7a;color:#fff;padding:8px 20px;font-size:13px;border-radius:4px;border:none;cursor:pointer;}
+.btn-save{background:#f39c12;color:#fff;padding:8px 20px;font-size:13px;border-radius:4px;border:none;cursor:pointer;font-weight:600;}
+.btn-save:hover{background:#d68910;}
+.card-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+.top-bar h2{font-size:15px;color:#1a4a7a;border-bottom:2px solid #1a4a7a;padding-bottom:6px;}
+.top-bar-btns{display:flex;gap:8px;}
+.company-group{border:1.5px solid #a8c0d8;border-radius:8px;margin-bottom:12px;overflow:hidden;}
+.company-group-header{background:#dde8f3;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;}
+.company-group-header strong{color:#1a4a7a;font-size:13px;}
+.company-group-body{padding:10px 14px;}
+.merge-badge{background:#f39c12;color:#fff;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;}
+.standalone-badge{background:#2980b9;color:#fff;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;}
+.hint{font-size:11px;color:#888;}
+.toast{position:fixed;bottom:24px;right:24px;background:#1e7e34;color:#fff;padding:10px 20px;border-radius:6px;font-size:13px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,.2);display:none;z-index:999;}
+.toast.err{background:#c0392b;}
+.status-bar{font-size:11px;color:#888;margin-left:4px;}
+
+/* ── LOGIN OVERLAY ── */
+#login-overlay{position:fixed;inset:0;background:#e8edf2;display:flex;align-items:center;justify-content:center;z-index:1000;}
+.login-box{background:#fff;border-radius:10px;box-shadow:0 4px 24px rgba(0,0,0,.15);padding:36px 32px;text-align:center;max-width:360px;width:90%;}
+.login-box h2{color:#1a4a7a;font-size:18px;margin-bottom:6px;}
+.login-box p{color:#666;font-size:12px;margin-bottom:20px;}
+.login-box input{width:100%;padding:10px 12px;border:1.5px solid #ccc;border-radius:6px;font-size:14px;margin-bottom:12px;text-align:center;}
+.login-box input:focus{outline:none;border-color:#1a4a7a;}
+.login-box button{width:100%;padding:10px;background:#1a4a7a;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;}
+.login-box button:hover{background:#133860;}
+.login-box .login-err{color:#c0392b;font-size:12px;margin-top:8px;display:none;}
+
+/* ── CV PAGE ── */
+#cv-output{display:none;}
+.cv-page{
+  width:210mm;min-height:297mm;
+  margin:0 auto;background:#fff;
+  padding:13mm 15mm 11mm;
+  font-family:'Segoe UI',Arial,sans-serif;
+  font-size:9pt;color:#222;line-height:1.4;
+}
+.cv-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #1a4a7a;padding-bottom:8px;margin-bottom:9px;}
+.cv-header-left h1{font-size:20pt;font-weight:700;color:#1a4a7a;}
+.cv-header-left .cv-subtitle{font-size:9.5pt;color:#555;margin-top:1px;}
+.cv-contact{display:flex;flex-direction:column;align-items:flex-end;gap:3px;font-size:8pt;color:#444;}
+.cv-section{margin-bottom:7px;}
+.cv-section-title{font-size:8.5pt;font-weight:700;color:#1a4a7a;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #b8cee0;padding-bottom:2px;margin-bottom:6px;}
+.cv-job{margin-bottom:6px;}
+.cv-job-hdr{display:flex;justify-content:space-between;align-items:baseline;}
+.cv-company{font-weight:700;color:#1a4a7a;font-size:9.5pt;}
+.cv-dates{font-size:8pt;color:#555;white-space:nowrap;}
+.cv-role{font-weight:600;font-size:8.8pt;}
+.cv-loc{font-size:7.8pt;color:#666;}
+.cv-bullets{padding-left:14px;margin-top:2px;}
+.cv-bullets li{margin-bottom:2px;font-size:8.3pt;line-height:1.43;}
+.cv-merged{margin-bottom:7px;}
+.cv-merged-company-row{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px dotted #b8cee0;padding-bottom:2px;margin-bottom:4px;}
+.cv-merged-company{font-weight:700;color:#1a4a7a;font-size:9.5pt;}
+.cv-merged-span{font-size:7.8pt;color:#888;font-style:italic;}
+.cv-merged-loc{font-size:7.8pt;color:#666;margin-bottom:3px;}
+.cv-sub-role{margin-bottom:5px;padding-left:8px;border-left:2px solid #c8d8ea;}
+.cv-sub-role .cv-role-hdr{display:flex;justify-content:space-between;}
+.cv-sub-role .cv-role{font-weight:600;font-size:8.8pt;}
+.cv-sub-role .cv-dates{font-size:8pt;color:#555;}
+.cv-edu{margin-bottom:4px;}
+.cv-edu .deg{font-weight:600;font-size:8.8pt;}
+.cv-edu .inst{font-size:7.8pt;color:#555;}
+.cv-cert-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 20px;}
+.cv-cert .cn{font-weight:600;font-size:8.2pt;}
+.cv-cert .co{font-size:7.7pt;color:#555;}
+.cv-skills-block{font-size:8.3pt;line-height:1.55;margin-bottom:3px;}
+.cv-skills-block strong{color:#1a4a7a;}
+
+@media print{
+  body{background:#fff;}
+  #editor-panel,#login-overlay{display:none!important;}
+  #cv-output{display:block!important;}
+  .cv-page{margin:0;box-shadow:none;padding:11mm 13mm 9mm;}
+  @page{size:A4;margin:0;}
+}
+</style>
+</head>
+<body>
+
+<div id="login-overlay">
+  <div class="login-box">
+    <h2>CV Builder</h2>
+    <p>Enter your password to access the editor</p>
+    <input type="password" id="login-pw" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button onclick="doLogin()">Unlock</button>
+    <div class="login-err" id="login-err">Wrong password. Try again.</div>
+  </div>
+</div>
+
+<div id="editor-panel" style="display:none;">
+  <div class="top-bar">
+    <div>
+      <h2>CV Editor — Nawaf Alalawi</h2>
+      <span class="status-bar" id="status-bar">Loading saved data...</span>
+    </div>
+    <div class="top-bar-btns">
+      <button class="btn-save" onclick="saveCV()">💾 Save</button>
+      <button class="btn-print" onclick="buildAndPrint()">🖨️ Print / PDF</button>
+    </div>
+  </div>
+
+  <div class="ed-section">
+    <h3>Personal Info</h3>
+    <div class="form-row">
+      <div><label>Full Name</label><input id="p-name" value="Nawaf Alalawi"></div>
+      <div><label>Title</label><input id="p-title" value="Product Manager"></div>
+    </div>
+    <div class="form-row">
+      <div><label>Location</label><input id="p-location" value="Riyadh, Saudi Arabia"></div>
+      <div><label>Email</label><input id="p-email" value="n.alalowi@gmail.com"></div>
+    </div>
+    <div class="form-row">
+      <div><label>Phone</label><input id="p-phone" value="+966561634672"></div>
+      <div><label>LinkedIn</label><input id="p-linkedin" value="in/digitalnawaf"></div>
+    </div>
+  </div>
+
+  <div class="ed-section">
+    <h3>Experience</h3>
+    <p class="hint" style="margin-bottom:10px;">💡 Same <strong>Company Name</strong> on multiple roles = they merge into one block on the CV.</p>
+    <div id="jobs-container"></div>
+    <button class="btn btn-green" onclick="addJob()">+ Add Position</button>
+  </div>
+
+  <div class="ed-section">
+    <h3>Education</h3>
+    <div id="edu-container"></div>
+    <button class="btn btn-green" onclick="addEdu()">+ Add Education</button>
+  </div>
+
+  <div class="ed-section">
+    <h3>Certifications</h3>
+    <div id="cert-container"></div>
+    <button class="btn btn-green" onclick="addCert()">+ Add Certification</button>
+  </div>
+
+  <div class="ed-section">
+    <h3>Skills</h3>
+    <div class="form-row full"><div><label>Core Skills</label><textarea id="s-core"></textarea></div></div>
+    <div class="form-row full"><div><label>Coding Skills</label><textarea id="s-code" style="min-height:40px;"></textarea></div></div>
+  </div>
+</div>
+
+<div id="cv-output"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── DEFAULT DATA ── */
+const DEFAULT = {
+  personal:{name:"Nawaf Alalawi",title:"Product Manager",location:"Riyadh, Saudi Arabia",email:"n.alalowi@gmail.com",phone:"+966561634672",linkedin:"in/digitalnawaf"},
+  jobs:[
+    {company:"Munjz",role:"Technical Product Manager",location:"Riyadh, Saudi Arabia",dates:"November 2025 – Present",bullets:""},
+    {company:"AYEN Platform LTD",role:"B2C Product Manager",location:"Riyadh, Saudi Arabia",dates:"November 2024 – October 2025",bullets:"Agile Leadership: Managed Scrum events (planning, reviews, retrospectives), maintained product roadmap and backlog, and aligned priorities across cross-functional teams.\nLaunched EXSEP V1.0 MVP independently, followed by V2.0, transforming AYEN from a service provider into a SaaS platform.\nB2C Product Ownership: Led all consumer-facing products (Inspector Web/App, Client Web/App, EXSEP), delivering two major app versions and new digital services.\nBusiness Impact: Expanded AYEN's role as a tech platform, shifting from service delivery to platform enablement, opening new revenue channels, reducing report delivery times, and scaling inspector engagement."},
+    {company:"AYEN Platform LTD",role:"Technology Manager & Acting Product Manager",location:"Riyadh, Saudi Arabia",dates:"April 2024 – November 2024",bullets:"Team Leadership & Processes: Recruited and built a high-performing tech team; implemented Scrum practices, QA processes, and regular code reviews.\nVendor & Budget Management: Negotiated with vendors, controlled budgets, and delivered projects on time.\nAyen V3 Launch: Directed the successful release of Ayen V3, cutting order steps from 22 to 11 (50% reduction in complexity).\nCustomer App (iOS & Android): Designed and launched the customer-facing mobile app.\nInspector App (iOS & Android): Enabled real-time on-site reporting; 41% of reports submitted in <5 hrs vs 1.5 days. Cut data entry by 63%, saving inspectors 50+ minutes per report."},
+    {company:"AYEN Platform LTD",role:"Product Manager",location:"Riyadh, Saudi Arabia",dates:"February 2024 – April 2024",bullets:"Launched high-converting landing pages, directly contributing to the highest weekly order volume in company history.\nConducted user interviews to identify pain points and collaborated with operations teams to deliver practical solutions.\nExecuted UX enhancements across client and inspector journeys, improving usability and accelerating adoption."},
+    {company:"المتحف الدولي للسيرة النبوية",role:"Head of Programming and Development Department",location:"Al Madinah · Remote",dates:"March 2023 – Present",bullets:"Directed the end-to-end development and deployment of 10+ digital platforms generating 7M+ visits.\nDesigned and implemented a ticketing system that processed 2M+ tickets and reduced operational costs by 75%.\nRecruited, trained, and managed a distributed team of 20+ engineers and specialists.\nManaged 20+ technical projects, achieving measurable improvements in performance, scalability, and organizational impact."},
+    {company:"المتحف الدولي للسيرة النبوية",role:"Senior Software Developer",location:"Saudi Arabia · Hybrid",dates:"May 2022 – February 2023",bullets:"Implemented and managed a ticketing system handling thousands of reservations.\nDeveloped an interactive screen for exhibition visitors describing the Prophet, peace be upon him."},
+    {company:"سكة بلس | Plus Sikka",role:"Co-Founder & Software Projects Manager",location:"Hybrid",dates:"November 2022 – Present",bullets:"Played multiple roles from the ground up — from developer and project manager to leading company strategy and multiple teams.\nDirected projects across various sectors, serving both private companies and government entities.\nContributed to the creation and execution of fundamental processes covering technical development, HR, and project management."},
+    {company:"This is taibah | طيبة هذه",role:"Digital Product Manager & Software Developer",location:"Saudi Arabia",dates:"November 2021 – October 2022",bullets:"Managing the work team and implementing an online platform offering various services.\nBuilt a store in partnership with 4 unique online stores and over 28 products.\nWon fifth place out of more than 300 startups in the \"Taibah Innovates 5\" competition."},
+    {company:"شبكة معالم التقنية",role:"Software Developer",location:"Saudi Arabia",dates:"January 2021 – March 2021",bullets:"Developed a platform for charities to receive donations.\nCreated an application for beneficiaries of charitable organizations."}
+  ],
+  edus:[
+    {deg:"Associate's Degree, Programming and Development Technology",inst:"Technical and Vocational Training Corporation",detail:"GPA: 4.91/5.0 · First-Class Honors · 2023"},
+    {deg:"Diploma of Education, Computer Diploma",inst:"Technical and Vocational Training Corporation",detail:"GPA: 4.91/5.0 · 2019"}
+  ],
+  certs:[
+    {name:"OLO Digital Product Management",org:"أكاديمية علو | Academy Olo · 2024"},
+    {name:"Certified AI Project Leader Program",org:"Rochester Institute of Technology · 2022"},
+    {name:"Prototyping and Product Development",org:"KAUST · 2022"},
+    {name:"Professional Project Management (35 hrs)",org:"European Board for Training & Consulting · 2022"},
+    {name:"Professional Project Management",org:"roshdx · 2022"},
+    {name:"Creativity & Entrepreneurship Forum",org:"National Entrepreneurship Institute · 2022"},
+    {name:"PHP and MySQL",org:"Flex Courses · 2020"},
+    {name:"Web Development Course",org:"Taibah University · 2020"},
+    {name:"Intro to Machine Learning",org:"Kaggle · 2020"},
+    {name:"SEO Course",org:"Udemy · 2019"},
+    {name:"Full Stack Development Track",org:"Udacity · 2019"},
+    {name:"Saudi Ambassadors Program",org:"Ministry of Communications & IT · 2018"}
+  ],
+  skills:{core:"Product Development & Lifecycle Management, Product Planning, Roadmap & Prioritization, Agile & Scrum, Cross-Functional Team Leadership, Project Management & Technical Project Leadership, User Experience & Behavior Analysis, Technical Leadership & Tech Team Building, Stakeholder & Team Management, Presentation & Communication Skills, Problem Solving & Decision-Making",code:"PHP, Laravel, HTML & CSS, Flutter, Python"}
+};
+
+let jobs=[],edus=[],certs=[];
+
+/* ── AUTH ── */
+function getToken(){return sessionStorage.getItem('cv_token')||'';}
+function authHeaders(){return{'Authorization':'Bearer '+getToken(),'Content-Type':'application/json'};}
+
+async function doLogin(){
+  const pw=document.getElementById('login-pw').value;
+  const errEl=document.getElementById('login-err');
+  errEl.style.display='none';
+  try{
+    const res=await fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})});
+    if(res.ok){
+      sessionStorage.setItem('cv_token',pw);
+      document.getElementById('login-overlay').style.display='none';
+      document.getElementById('editor-panel').style.display='block';
+      loadCV();
+    } else {
+      errEl.style.display='block';
+    }
+  } catch(e){
+    errEl.textContent='Could not reach server';
+    errEl.style.display='block';
+  }
+}
+
+/* auto-login if token exists in session */
+(function autoLogin(){
+  const token=getToken();
+  if(token){
+    fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:token})})
+      .then(r=>{
+        if(r.ok){
+          document.getElementById('login-overlay').style.display='none';
+          document.getElementById('editor-panel').style.display='block';
+          loadCV();
+        }
+      }).catch(()=>{});
+  }
+})();
+
+/* ── LOAD FROM API ── */
+async function loadCV(){
+  const sb=document.getElementById('status-bar');
+  try{
+    const res=await fetch('/api/load',{headers:authHeaders()});
+    if(res.ok){
+      const data=await res.json();
+      applyData(data);
+      sb.textContent='✅ Loaded saved data';
+    } else if(res.status===404){
+      applyData(DEFAULT);
+      sb.textContent='ℹ️ No saved data — loaded defaults';
+    } else {
+      applyData(DEFAULT);
+      sb.textContent='⚠️ Load failed — loaded defaults';
+    }
+  } catch(e){
+    applyData(DEFAULT);
+    sb.textContent='⚠️ API not available — loaded defaults';
+  }
+  renderAll();
+}
+
+function applyData(d){
+  jobs=[...d.jobs];
+  edus=[...d.edus];
+  certs=[...d.certs];
+  const p=d.personal||DEFAULT.personal;
+  document.getElementById('p-name').value=p.name||'';
+  document.getElementById('p-title').value=p.title||'';
+  document.getElementById('p-location').value=p.location||'';
+  document.getElementById('p-email').value=p.email||'';
+  document.getElementById('p-phone').value=p.phone||'';
+  document.getElementById('p-linkedin').value=p.linkedin||'';
+  const s=d.skills||DEFAULT.skills;
+  document.getElementById('s-core').value=s.core||'';
+  document.getElementById('s-code').value=s.code||'';
+}
+
+/* ── SAVE TO API ── */
+async function saveCV(){
+  const payload={
+    personal:{
+      name:document.getElementById('p-name').value,
+      title:document.getElementById('p-title').value,
+      location:document.getElementById('p-location').value,
+      email:document.getElementById('p-email').value,
+      phone:document.getElementById('p-phone').value,
+      linkedin:document.getElementById('p-linkedin').value
+    },
+    jobs,edus,certs,
+    skills:{
+      core:document.getElementById('s-core').value,
+      code:document.getElementById('s-code').value
+    }
+  };
+  try{
+    const res=await fetch('/api/save',{
+      method:'POST',
+      headers:authHeaders(),
+      body:JSON.stringify(payload)
+    });
+    if(res.ok) showToast('✅ Saved successfully!',false);
+    else showToast('❌ Save failed',true);
+  } catch(e){
+    showToast('❌ Could not reach server',true);
+  }
+}
+
+function showToast(msg,err=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className='toast'+(err?' err':'');
+  t.style.display='block';
+  setTimeout(()=>t.style.display='none',3000);
+}
+
+/* ── HELPERS ── */
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function groupJobs(){
+  const order=[],map={};
+  jobs.forEach((j,i)=>{
+    const k=j.company.trim();
+    if(!map[k]){map[k]=[];order.push(k);}
+    map[k].push({...j,idx:i});
+  });
+  return{order,map};
+}
+
+/* ── RENDER EDITOR ── */
+function renderJobs(){
+  const c=document.getElementById('jobs-container');
+  c.innerHTML='';
+  const{order,map}=groupJobs();
+  order.forEach(company=>{
+    const roles=map[company];
+    const isMerged=roles.length>1;
+    const badge=isMerged?`<span class="merge-badge">⛓ Merged (${roles.length} roles)</span>`:`<span class="standalone-badge">Single</span>`;
+    let rolesHTML='';
+    roles.forEach(j=>{
+      const i=j.idx;
+      rolesHTML+=`<div class="role-card"><details>
+        <summary>${esc(j.role)}&nbsp;<small style="color:#888;font-weight:400;">${esc(j.dates)}</small></summary>
+        <div class="form-row">
+          <div><label>Company Name</label><input value="${esc(j.company)}" onchange="jobs[${i}].company=this.value;renderJobs();"></div>
+          <div><label>Role / Title</label><input value="${esc(j.role)}" onchange="jobs[${i}].role=this.value;renderJobs();"></div>
+        </div>
+        <div class="form-row">
+          <div><label>Location</label><input value="${esc(j.location)}" onchange="jobs[${i}].location=this.value;"></div>
+          <div><label>Dates</label><input value="${esc(j.dates)}" onchange="jobs[${i}].dates=this.value;"></div>
+        </div>
+        <div class="form-row full"><div><label>Bullet Points (one per line)</label>
+          <textarea onchange="jobs[${i}].bullets=this.value;">${esc(j.bullets)}</textarea>
+        </div></div>
+        <div class="card-actions">
+          ${i>0?`<button class="btn btn-blue" onclick="moveJob(${i},-1)">▲ Up</button>`:''}
+          ${i<jobs.length-1?`<button class="btn btn-blue" onclick="moveJob(${i},1)">▼ Down</button>`:''}
+          <button class="btn btn-red" onclick="removeJob(${i})">✕ Remove</button>
+        </div>
+      </details></div>`;
+    });
+    c.innerHTML+=`<div class="company-group">
+      <div class="company-group-header">
+        <strong>${esc(company)}</strong>
+        <div style="display:flex;gap:8px;align-items:center;">${badge}
+          <button class="btn btn-green" style="padding:4px 10px;font-size:11px;" onclick="addRoleToCompany('${esc(company)}')">+ Add Role</button>
+        </div>
+      </div>
+      <div class="company-group-body">${rolesHTML}</div>
+    </div>`;
+  });
+}
+
+function renderEdus(){
+  const c=document.getElementById('edu-container');c.innerHTML='';
+  edus.forEach((e,i)=>{
+    c.innerHTML+=`<div class="job-card"><details>
+      <summary>${esc(e.deg)}</summary>
+      <div class="form-row full"><div><label>Degree</label><input value="${esc(e.deg)}" onchange="edus[${i}].deg=this.value;"></div></div>
+      <div class="form-row">
+        <div><label>Institution</label><input value="${esc(e.inst)}" onchange="edus[${i}].inst=this.value;"></div>
+        <div><label>Details</label><input value="${esc(e.detail)}" onchange="edus[${i}].detail=this.value;"></div>
+      </div>
+      <div class="card-actions"><button class="btn btn-red" onclick="removeEdu(${i})">✕ Remove</button></div>
+    </details></div>`;
+  });
+}
+
+function renderCerts(){
+  const c=document.getElementById('cert-container');c.innerHTML='';
+  certs.forEach((ce,i)=>{
+    c.innerHTML+=`<div class="job-card"><details>
+      <summary>${esc(ce.name)}</summary>
+      <div class="form-row">
+        <div><label>Certification Name</label><input value="${esc(ce.name)}" onchange="certs[${i}].name=this.value;"></div>
+        <div><label>Org & Year</label><input value="${esc(ce.org)}" onchange="certs[${i}].org=this.value;"></div>
+      </div>
+      <div class="card-actions"><button class="btn btn-red" onclick="removeCert(${i})">✕ Remove</button></div>
+    </details></div>`;
+  });
+}
+
+function renderAll(){renderJobs();renderEdus();renderCerts();}
+
+/* ── CRUD ── */
+function addJob(){jobs.push({company:'New Company',role:'New Role',location:'',dates:'',bullets:''});renderJobs();}
+function addRoleToCompany(company){
+  let last=-1;jobs.forEach((j,i)=>{if(j.company===company)last=i;});
+  jobs.splice(last+1,0,{company,role:'New Role',location:'',dates:'',bullets:''});renderJobs();
+}
+function removeJob(i){if(confirm('Remove this position?')){jobs.splice(i,1);renderJobs();}}
+function moveJob(i,dir){const t=jobs[i+dir];jobs[i+dir]=jobs[i];jobs[i]=t;renderJobs();}
+function addEdu(){edus.push({deg:'Degree Title',inst:'Institution',detail:'Year'});renderEdus();}
+function removeEdu(i){edus.splice(i,1);renderEdus();}
+function addCert(){certs.push({name:'Certification Name',org:'Org · Year'});renderCerts();}
+function removeCert(i){certs.splice(i,1);renderCerts();}
+
+/* ── BUILD & PRINT ── */
+function makeBullets(txt){
+  if(!txt||!txt.trim())return'';
+  return`<ul class="cv-bullets">${txt.split('\n').filter(l=>l.trim()).map(l=>`<li>${esc(l)}</li>`).join('')}</ul>`;
+}
+function getSpan(roles){
+  const first=roles[roles.length-1].dates.split('–')[0].trim();
+  const last=(roles[0].dates.split('–')[1]||'Present').trim();
+  return`${first} – ${last}`;
+}
+
+function buildCV(){
+  const p={
+    name:document.getElementById('p-name').value,
+    title:document.getElementById('p-title').value,
+    location:document.getElementById('p-location').value,
+    email:document.getElementById('p-email').value,
+    phone:document.getElementById('p-phone').value,
+    linkedin:document.getElementById('p-linkedin').value
+  };
+  const coreSkills=document.getElementById('s-core').value;
+  const codeSkills=document.getElementById('s-code').value;
+  const{order,map}=groupJobs();
+
+  let expHTML='';
+  order.forEach(company=>{
+    const roles=map[company];
+    if(roles.length===1){
+      const j=roles[0];
+      expHTML+=`<div class="cv-job">
+        <div class="cv-job-hdr"><span class="cv-company">${esc(company)}</span><span class="cv-dates">${esc(j.dates)}</span></div>
+        <div class="cv-role">${esc(j.role)}</div>
+        ${j.location?`<div class="cv-loc">${esc(j.location)}</div>`:''}
+        ${makeBullets(j.bullets)}
+      </div>`;
+    } else {
+      const sharedLoc=(roles.find(r=>r.location)||{}).location||'';
+      let rolesHTML='';
+      roles.forEach(j=>{
+        rolesHTML+=`<div class="cv-sub-role">
+          <div class="cv-role-hdr"><span class="cv-role">${esc(j.role)}</span><span class="cv-dates">${esc(j.dates)}</span></div>
+          ${makeBullets(j.bullets)}
+        </div>`;
+      });
+      expHTML+=`<div class="cv-merged">
+        <div class="cv-merged-company-row">
+          <span class="cv-merged-company">${esc(company)}</span>
+          <span class="cv-merged-span">${esc(getSpan(roles))}</span>
+        </div>
+        ${sharedLoc?`<div class="cv-merged-loc">${esc(sharedLoc)}</div>`:''}
+        ${rolesHTML}
+      </div>`;
+    }
+  });
+
+  let eduHTML='';
+  edus.forEach(e=>{eduHTML+=`<div class="cv-edu"><div class="deg">${esc(e.deg)}</div><div class="inst">${esc(e.inst)} · ${esc(e.detail)}</div></div>`;});
+
+  let certHTML='<div class="cv-cert-grid">';
+  certs.forEach(ce=>{certHTML+=`<div class="cv-cert"><div class="cn">${esc(ce.name)}</div><div class="co">${esc(ce.org)}</div></div>`;});
+  certHTML+='</div>';
+
+  return`<div class="cv-page">
+    <div class="cv-header">
+      <div class="cv-header-left"><h1>${esc(p.name)}</h1><div class="cv-subtitle">${esc(p.title)}</div></div>
+      <div class="cv-contact"><span>📍 ${esc(p.location)}</span><span>✉️ ${esc(p.email)}</span><span>📞 ${esc(p.phone)}</span><span>🔗 ${esc(p.linkedin)}</span></div>
+    </div>
+    <div class="cv-section"><div class="cv-section-title">Experience</div>${expHTML}</div>
+    <div class="cv-section"><div class="cv-section-title">Education</div>${eduHTML}</div>
+    <div class="cv-section"><div class="cv-section-title">Certifications</div>${certHTML}</div>
+    <div class="cv-section"><div class="cv-section-title">Skills</div>
+      <div class="cv-skills-block"><strong>Core Skills:</strong> ${esc(coreSkills)}</div>
+      <div class="cv-skills-block"><strong>Coding Skills:</strong> ${esc(codeSkills)}</div>
+    </div>
+  </div>`;
+}
+
+function buildAndPrint(){
+  const out=document.getElementById('cv-output');
+  out.innerHTML=buildCV();
+  out.style.display='block';
+  setTimeout(()=>{window.print();out.style.display='none';},200);
+}
+
+/* ── INIT ── */
+/* loadCV() is called after successful login */
+</script>
+</body>
+</html>
